@@ -1,0 +1,15 @@
+# Don't add config file in git
+*.cfg
+
+.DS_Store
+# python stuff
+environment
+build
+dist
+*.pyc
+p4clean.egg-info
+
+# vim stuff
+*.swp
+*.un~
+tags
