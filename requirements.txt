@@ -1,0 +1,6 @@
+pygame==1.9.2pre
+python-dateutil==2.1
+python-rovi==0.0.3
+requests==1.2.3
+six==1.4.1
+wsgiref==0.1.2
