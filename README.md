@@ -3,6 +3,9 @@ rasp-tv-listing
 
 Transform raspberry pi as a permanent TV Guide
 
+![Image](./rasp-tv-listing.png?raw=true)
+
+
 The script expect a config file names "rasp-tv-listing.cfg" in the CWD. Here how the content of the configuration file should looks like:
 
 
