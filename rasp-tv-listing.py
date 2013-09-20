@@ -24,12 +24,11 @@ class Schedule(object):
 
     def __init__(self):
         config = ConfigParser.RawConfigParser()
-        config.read('rasp-tv.cfg')
-        api_key = config.get('rovi_api', 'api_key')
-        self.postal_code = config.get('rovi_api', 'postal_code')
-        self.country_code = config.get('rovi_api', 'country_code')
-        # channels = config.get('rovi_api', 'channels').replace(' ', '').split(',')
-        channels = config.get('rovi_api', 'channels').split(',')
+        config.read('rasp-tv-listing.cfg')
+        api_key = config.get('rasp-tv-listing', 'api_key')
+        self.postal_code = config.get('rasp-tv-listing', 'postal_code')
+        self.country_code = config.get('rasp-tv-listing', 'country_code')
+        channels = config.get('rasp-tv-listing', 'channels').split(',')
         self.channels = [unicode(channel.strip()) for channel in channels]
         self.tv_listings = TVListings(api_key=api_key)
         self.update_time = 0
