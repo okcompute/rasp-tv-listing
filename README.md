@@ -6,7 +6,7 @@ Transform raspberry pi as a permanent TV Guide
 The script expect a config file names "rasp-tv-listing.cfg" in the CWD. Here how the content of the configuration file should looks like:
 
 
-[rovi_api]  
+[rasp-tv-listing]  
 api_key = api_key  
 postal_code = Postal Code  
 country_code = two letter country code  
