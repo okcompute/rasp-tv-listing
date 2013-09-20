@@ -115,7 +115,7 @@ class Schedule(object):
         return channels
 
     def get_schedule(self):
-        """ Return the schedule for channels set in rasp-tv.conf.
+        """ Return the schedule for channels set in rasp-tv-listing.cfg
 
         Update TV listing from Rovi service every LISTING_UPDATE_TIME seconds
 
