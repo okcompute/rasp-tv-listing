@@ -227,9 +227,10 @@ class Renderer(object):
 
             for airing in channel.airings:
                 # Format airing text
-                dt = datetime.datetime.fromtimestamp(time.mktime(airing.time))
                 now = datetime.datetime.now()
-                if now > dt and now < dt + datetime.timedelta(airing.duration):
+                start = datetime.datetime.fromtimestamp(time.mktime(airing.time))
+                end = start + datetime.timedelta(minutes=airing.duration)
+                if start <= now < end:
                     color = Renderer.WHITE
                 else:
                     color = Renderer.GREY
