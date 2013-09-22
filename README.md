@@ -3,17 +3,23 @@ rasp-tv-listing
 
 Transform raspberry pi as a permanent TV Guide
 
-![Image](./rasp-tv-listing.png?raw=true)
+![OSX screenshot](./rasp-tv-listing.png?raw=true)
 
 Requirements
 ------------
-1. Python packages
+- Python packages  
+    Please look the pip generated `requirements.txt` file.  
+    Note about Pygame requirement:   
+    On Raspberry Pi, this python package is already installed (Raspbian), no need to install.  
 
-Please look the pip generated `requirements.txt` file. The hardest to install is PyGame. For the rest it is all straightfowarrd.
+    On OSX, I used the following istallation steps:
+    1. I installed Xquartz (not 100% sure it is required though). [Install info on Xquartz website](http://xquartz.macosforge.org/landing/ "Xquartz")
+    2. I used Homebrew to install Pygame dependencies: brew install sdl sdl_ttf sdl_image sdl_mixer
+    3. pip install hg+http://bitbucket.org/pygame/pygame  
 
-2. Rovi's TV Listing api key
-
-You need an API key for Rovi's Cloud services. Visit their developer website for more info.
+    For Windows or Linux, I never tried so I don't know.
+- Rovi's TV Listing api key  
+    You need an API key for Rovi's Cloud services. Visit their developer website for more info.
 
 Configuration
 -----------
