@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /home/pi/Developer/rasp-tv-listing
+source ./environment/bin/activate
+sudo python rasp-tv-listing.py
+deactivate

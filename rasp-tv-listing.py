@@ -39,12 +39,23 @@ Airing = namedtuple('Airing', ['title', 'time', 'duration'])
 Position = namedtuple('Position', ['x', 'y'])
 Size = namedtuple('Size', ['width', 'height'])
 
+import logging
+logger = logging.getLogger('rasp-tv-listing')
+hdlr = logging.FileHandler('/var/tmp/rasp-tv-listing.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.DEBUG)
+logger.info("Starting rasp-tv-listing")
+
+class RasptTvListingException(Exception):
+    pass
 
 class Schedule(object):
 
     """ Manage Rovi api."""
     LISTING_UPDATE_TIME = 15 * 60
-    WAIT_FOR_RETRY_AFTER_ERROR = 5  # check connection back every 5 seconds
+    CONNECTION_ERROR_RETRY_DELAY = 30 # check connection back every 30 seconds
 
     def __init__(self):
         config = ConfigParser.RawConfigParser()
@@ -56,8 +67,9 @@ class Schedule(object):
         self.channels = [unicode(channel.strip()) for channel in channels]
         self.tv_listings = TVListings(api_key=api_key)
         self.update_time = 0
-        self.error_time = 0
+        self.connection_error_time = 0
         self.source_ids = 0
+        logger.debug("Schedule:__init__() finished")
 
     def _utc_to_local(self, t):
         """ Convert from utc time to local time. """
@@ -69,6 +81,7 @@ class Schedule(object):
         specified country and postal code. """
         services_response = self.tv_listings.services(
             postal_code=postal_code, country_code=country_code)
+        logger.debug("tv)listing:service \n %s" % services_response)
         services = services_response.get(
             'ServicesResult').get('Services').get('Service')
         broadcast_filter = lambda service: service.get('Type') == u'Broadcast'
@@ -81,6 +94,7 @@ class Schedule(object):
         """ Return list of correspondings sources ids for a list of channels. If no
         channels are set, all source ids for the service are returned. """
         details = self.tv_listings.service_details(service_id=service_id)
+        logger.debug("channels sourcd ids: %s" % details)
         source_ids = []
         channels = details.get('ServiceDetailsResult').get(
             'ChannelLineup').get('Channels')
@@ -91,22 +105,24 @@ class Schedule(object):
 
     def _get_channels_schedule(self, service_id, source_ids=None, duration=120):
         """ Return list of Channel instance for the provided sources_id on the service. """
+        print "Call to grid_schedule"
         grid_schedule = self.tv_listings.grid_schedule(service_id=service_id,
                                                        duration=duration,
                                                        source_id=source_ids)
+        logger.debug("grid schedules %s" % grid_schedule)
         grid_channels = grid_schedule.get(
             'GridScheduleResult').get('GridChannels')
         print "Channel counts: %d" % len(grid_channels)
         channels = []
         for grid_channel in grid_channels:
             print 80 * "-"
-            print "Channel: " + grid_channel.get('DisplayName'), grid_channel.get('SourceLongName'), "(" + grid_channel.get('Channel') + ")"
+            print "Channel: " + grid_channel.get('DisplayName').encode('ascii', 'replace'), grid_channel.get('SourceLongName').encode('ascii', 'replace'), "(" + grid_channel.get('Channel').encode('ascii', 'replace') + ")"
             airings = []
             for airing in grid_channel.get('Airings'):
                 airtime = parser.parse(airing.get('AiringTime'))
                 local_airtime = self._utc_to_local(airtime.timetuple())
                 formatted_airtime = time.strftime("%H:%M", local_airtime)
-                print formatted_airtime + ": " + airing.get('Title'), "(%s minutes)" % airing.get('Duration')
+                print formatted_airtime + ": " + airing.get('Title').encode('ascii', 'replace'), "(%s minutes)" % airing.get('Duration')
                 airings.append(Airing(title=airing.get('Title'),
                                       time=local_airtime,
                                       duration=int(airing.get('Duration'))))
@@ -120,11 +136,11 @@ class Schedule(object):
         Update TV listing from Rovi service every LISTING_UPDATE_TIME seconds
 
         """
-        if self.error_time != 0:
-            if time.time() - self.error_time > Schedule.WAIT_FOR_RETRY_AFTER_ERROR:
-                self.error_time = 0
+        if self.connection_error_time != 0:
+            if time.time() - self.connection_error_time > Schedule.CONNECTION_ERROR_RETRY_DELAY:
+                self.connection_error_time = 0
             else:
-                raise Exception(self.error_messge)
+                raise RasptTvListingException(self.error_message)
         try:
             if not self.source_ids:
                 self.service_id = self._get_broadcast_service_id(
@@ -137,17 +153,17 @@ class Schedule(object):
             if time.time() - self.update_time > Schedule.LISTING_UPDATE_TIME:
                 self.schedule = self._get_channels_schedule(
                     self.service_id, self.source_ids)
-                self.network_error = False
                 self.update_time = time.time()
+                logger.debug("_get_channels_schedule was called")
             return self.schedule
         except ConnectionError:
-            self.error_time = time.time()
-            self.error_messge = "Network error. Verify your connection."
-            raise Exception(self.error_messge)
-        except ValueError:
-            self.error_time = time.time()
-            self.error_messge = "TV listing data unavailable at this moment."
-            raise Exception(self.error_messge)
+            self.connection_error_time = time.time()
+            self.error_message = "Network error. Verify your connection."
+            logger.exception(e)
+            raise RasptTvListingException(self.error_message)
+        except Exception as e:
+            logger.exception(e)
+            raise
 
 
 class Renderer(object):
@@ -289,5 +305,5 @@ if __name__ == "__main__":
     while running:
         try:
             running = renderer.tick(schedule.get_schedule())
-        except Exception as e:
+        except RasptTvListingException as e:
             running = renderer.tick_error(e.message)
